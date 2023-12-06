@@ -10,8 +10,13 @@ import 'package:story_app/widget/item_story_widget.dart';
 class HomeScreen extends StatelessWidget {
   final Function() logout;
   final Function(Story story) toDetail;
+  final Function() toUploadScreen;
 
-  const HomeScreen({Key? key, required this.logout, required this.toDetail})
+  const HomeScreen(
+      {Key? key,
+      required this.logout,
+      required this.toDetail,
+      required this.toUploadScreen})
       : super(key: key);
 
   @override
@@ -135,7 +140,7 @@ class HomeScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.black,
         onPressed: () {
-          // Add functionality for the FloatingActionButton here
+          toUploadScreen();
         },
         child: const Icon(
           Icons.add,

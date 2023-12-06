@@ -7,6 +7,7 @@ import 'package:story_app/screen/auth/register_screen.dart';
 import 'package:story_app/screen/detail/detail_screen.dart';
 import 'package:story_app/screen/home/home_screen.dart';
 import 'package:story_app/screen/splash/splash_screen.dart';
+import 'package:story_app/screen/upload/upload_screen.dart';
 
 class StoryAppRouterDelegate extends RouterDelegate
     with ChangeNotifier, PopNavigatorRouterDelegateMixin {
@@ -24,10 +25,10 @@ class StoryAppRouterDelegate extends RouterDelegate
     notifyListeners();
   }
 
-
   List<Page> historyStack = [];
   bool? isLoggedIn;
   bool isRegister = false;
+  bool isUpload = false;
   Story? story;
 
   List<Page> get _splashStack => const [
@@ -48,15 +49,31 @@ class StoryAppRouterDelegate extends RouterDelegate
                 notifyListeners();
               },
               toDetail: (value) {
-                story = value; 
+                story = value;
+                notifyListeners();
+              },
+              toUploadScreen: () {
+                isUpload = true;
                 notifyListeners();
               },
             ),
           ),
-        if(story != null)
+        if (story != null)
           MaterialPage(
             key: ValueKey('StoryDetail-$story'),
-            child: DetailScreen(story: story!,)
+            child: DetailScreen(
+              story: story!,
+            ),
+          ),
+        if (isUpload)
+          MaterialPage(
+            key: const ValueKey('UploadPage'),
+            child: UploadScreen(
+              onUpload: () {
+                isUpload = false;
+                notifyListeners();
+              },
+            ),
           )
       ];
   List<Page> get _loggedOutStack => [
@@ -88,7 +105,7 @@ class StoryAppRouterDelegate extends RouterDelegate
   Widget build(BuildContext context) {
     if (isLoggedIn == null) {
       historyStack = _splashStack;
-    } else if (isLoggedIn == true){
+    } else if (isLoggedIn == true) {
       historyStack = _loggedInStack;
     } else {
       historyStack = _loggedOutStack;
@@ -100,6 +117,7 @@ class StoryAppRouterDelegate extends RouterDelegate
         if (!didPop) return false;
 
         isRegister = false;
+        isUpload = false;
         story = null;
         notifyListeners();
         return true;

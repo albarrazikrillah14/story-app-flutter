@@ -4,6 +4,7 @@ import 'package:story_app/data/remote/api/api_service.dart';
 import 'package:story_app/provider/auth_provider.dart';
 import 'package:story_app/data/db/auth_repository.dart';
 import 'package:story_app/provider/stories_provider.dart';
+import 'package:story_app/provider/upload_provider.dart';
 import 'package:story_app/routes/router_delegate.dart';
 
 void main() => runApp(const StoryApp());
@@ -19,12 +20,15 @@ class _StoryAppState extends State<StoryApp> {
   late StoryAppRouterDelegate storyAppRouterDelegate;
   late AuthProvider authProvider;
   late StoriesProvider storiesProvider;
+  late UploadProvider uploadProvider;
 
   @override
   void initState() {
     final AuthRepository authRepository = AuthRepository();
     storiesProvider = StoriesProvider(ApiService(authRepository));
     authProvider = AuthProvider(authRepository, ApiService(authRepository));
+
+    uploadProvider = UploadProvider(apiService: ApiService(authRepository));
 
     storyAppRouterDelegate =
         StoryAppRouterDelegate(authRepository, storiesProvider);
@@ -42,6 +46,9 @@ class _StoryAppState extends State<StoryApp> {
         ChangeNotifierProvider(
           create: (context) => storiesProvider,
         ),
+        ChangeNotifierProvider(
+          create: (context) => uploadProvider,
+        )
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

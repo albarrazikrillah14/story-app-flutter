@@ -1,21 +1,15 @@
-import 'dart:convert';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class StoryUploadResponse {
-  final bool error;
-  final String message;
+part 'story_upload_response.g.dart';
+part 'story_upload_response.freezed.dart';
 
-  StoryUploadResponse({
-    required this.error,
-    required this.message,
-  });
+@freezed
+class StoryUploadResponse with _$StoryUploadResponse {
+  factory StoryUploadResponse({
+    required bool error,
+    required String message,
+  }) = _StoryUploadResponse;
 
-  factory StoryUploadResponse.fromMap(Map<String, dynamic> map) {
-    return StoryUploadResponse(
-      error: map['error'] ?? false,
-      message: map['message'] ?? '',
-    );
-  }
-
-  factory StoryUploadResponse.fromJson(String source) =>
-      StoryUploadResponse.fromMap(json.decode(source));
+  factory StoryUploadResponse.fromJson(Map<String, dynamic> json) =>
+      _$StoryUploadResponseFromJson(json);
 }

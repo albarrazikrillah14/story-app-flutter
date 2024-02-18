@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:story_app/data/remote/api/api_service.dart';
+import 'package:story_app/common/url_strategy.dart';
 import 'package:story_app/provider/auth_provider.dart';
 import 'package:story_app/data/db/auth_repository.dart';
 import 'package:story_app/provider/stories_provider.dart';
-import 'package:story_app/provider/upload_provider.dart';
+import 'package:story_app/routes/location_page_manager.dart';
+import 'package:story_app/routes/page_manager.dart';
+import 'package:story_app/routes/route_information_parser.dart';
 import 'package:story_app/routes/router_delegate.dart';
 
-void main() => runApp(const StoryApp());
+void main() {
+  usePathUrlStrategy();
+  runApp(const StoryApp());
+}
 
 class StoryApp extends StatefulWidget {
   const StoryApp({Key? key}) : super(key: key);
@@ -17,22 +22,23 @@ class StoryApp extends StatefulWidget {
 }
 
 class _StoryAppState extends State<StoryApp> {
+  late StoryRouteInformationParser storyRouteInformationParser;
   late StoryAppRouterDelegate storyAppRouterDelegate;
   late AuthProvider authProvider;
   late StoriesProvider storiesProvider;
-  late UploadProvider uploadProvider;
+  late LocationPageManager locationPageManager;
+  late PageManager pageManager;
 
   @override
   void initState() {
+    storyRouteInformationParser = StoryRouteInformationParser();
     final AuthRepository authRepository = AuthRepository();
-    storiesProvider = StoriesProvider(ApiService(authRepository));
-    authProvider = AuthProvider(authRepository, ApiService(authRepository));
-
-    uploadProvider = UploadProvider(apiService: ApiService(authRepository));
-
+    storiesProvider = StoriesProvider(authRepository);
+    authProvider = AuthProvider(authRepository);
     storyAppRouterDelegate =
-        StoryAppRouterDelegate(authRepository, storiesProvider);
-
+        StoryAppRouterDelegate(authProvider, storiesProvider);
+    locationPageManager = LocationPageManager();
+    pageManager = PageManager();
     super.initState();
   }
 
@@ -46,28 +52,15 @@ class _StoryAppState extends State<StoryApp> {
         ChangeNotifierProvider(
           create: (context) => storiesProvider,
         ),
-        ChangeNotifierProvider(
-          create: (context) => uploadProvider,
-        )
+        ChangeNotifierProvider(create: (context) => locationPageManager),
+        ChangeNotifierProvider(create: (context) => pageManager)
       ],
-      child: MaterialApp(
+      child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSwatch(
-            primarySwatch: Colors.red,
-            accentColor: Colors.black,
-            backgroundColor: Colors.white,
-          ),
-          buttonTheme: const ButtonThemeData(
-            buttonColor: Color(0xFFB3005E),
-          ),
-          iconTheme: const IconThemeData(color: Color(0xFFB3005E)),
-        ),
-        title: 'StoryApp',
-        home: Router(
-          routerDelegate: storyAppRouterDelegate,
-          backButtonDispatcher: RootBackButtonDispatcher(),
-        ),
+        title: 'Story App',
+        routerDelegate: storyAppRouterDelegate,
+        routeInformationParser: storyRouteInformationParser,
+        backButtonDispatcher: RootBackButtonDispatcher(),
       ),
     );
   }

@@ -59,6 +59,7 @@ class _LoginScreen extends State<LoginScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Center(
+            child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -130,6 +131,7 @@ class _LoginScreen extends State<LoginScreen> {
                                 final authRead = context.read<AuthProvider>();
 
                                 final login = await authRead.login(request);
+
                                 if (login) {
                                   scaffoldMessenger.showSnackBar(const SnackBar(
                                       content: Text('login berhasil')));
@@ -165,7 +167,7 @@ class _LoginScreen extends State<LoginScreen> {
               ),
             ],
           ),
-        ),
+        )),
       ),
     );
   }

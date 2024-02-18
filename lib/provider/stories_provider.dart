@@ -1,21 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:story_app/data/db/auth_repository.dart';
 import 'package:story_app/data/local/model/auth/login/login_request.dart';
 import 'package:story_app/data/local/model/auth/register/register_request.dart';
-import 'package:story_app/data/local/model/list/story_list_request.dart';
-import 'package:story_app/data/local/model/list/story_list_response.dart';
 import 'package:story_app/data/local/model/story.dart';
+import 'package:story_app/data/local/model/upload/story_upload_request.dart';
+import 'package:story_app/data/local/model/upload/story_upload_response.dart';
 import 'package:story_app/data/remote/api/api_service.dart';
 
 enum ResultState { loading, noData, hasData, error }
 
 class StoriesProvider extends ChangeNotifier {
-  final ApiService apiService;
+  final AuthRepository authRepository;
+  late ApiService apiService;
 
-  late ResultState _state;
-  late List<Story> _stories;
-  late Story _detailStory;
+  StoriesProvider(this.authRepository) {
+    apiService = ApiService(authRepository);
+  }
+
+  late ResultState _state = ResultState.loading;
+  late final List<Story> _stories = [];
+  Story _detailStory =
+      Story(id: "", name: "", description: "", photoUrl: "", createdAt: "");
   late bool _error;
   String _message = '';
+  bool isUploading = false;
+
+  XFile? imageFile;
+  String? imagePath;
 
   ResultState get state => _state;
   List<Story> get stories => _stories;
@@ -23,39 +35,37 @@ class StoriesProvider extends ChangeNotifier {
   String get message => _message;
   bool get error => _error;
 
-  StoriesProvider(this.apiService);
+  int? pageItems = 1;
+  int sizeItems = 10;
 
-  Future<StoryListResponse> fetchAllStories(StoryListRequest request) async {
-    _state = ResultState.loading;
-    _message = 'Loading.';
-    notifyListeners();
-    final list = await apiService.getStories(request);
+  Future<void> fetchAllStories() async {
     try {
-      if (list.listStory.isEmpty) {
-        _state = ResultState.noData;
-        _message = list.message;
-        _error = list.error;
-        notifyListeners();
-      } else {
-        _state = ResultState.hasData;
-        _stories = list.listStory;
-        _error = list.error;
-
-        notifyListeners();
+      if (pageItems == 1) {
+        _state = ResultState.loading;
+        _message = "Loading";
       }
+
+      final result = await apiService.getStories(pageItems!, sizeItems, 1);
+
+      if (result.listStory.length < sizeItems) {
+        pageItems = null;
+      } else {
+        pageItems = pageItems! + 1;
+      }
+      _state = ResultState.hasData;
+      _stories.addAll(result.listStory);
+      _message = "Success";
     } catch (e) {
       _state = ResultState.error;
-      _message = 'Terjadi Kesalahan Internet';
-      _error = list.error;
+      _message = "No Data";
+    } finally {
       notifyListeners();
     }
-
-    return list;
   }
 
   Future<void> fetchDetailStory(String id) async {
     _state = ResultState.loading;
-    _message = 'Loading.';
+    _message = 'Loading';
     notifyListeners();
 
     final detail = await apiService.getDetailStory(id);
@@ -64,17 +74,16 @@ class StoriesProvider extends ChangeNotifier {
         _state = ResultState.noData;
         _message = detail.message;
         _error = detail.error;
-        notifyListeners();
       } else {
         _state = ResultState.hasData;
         _detailStory = detail.story;
         _error = detail.error;
-        notifyListeners();
       }
     } catch (e) {
       _state = ResultState.error;
       _message = 'Terjadi Kesalahan Internet';
       _error = detail.error;
+    } finally {
       notifyListeners();
     }
   }
@@ -85,24 +94,21 @@ class StoriesProvider extends ChangeNotifier {
     notifyListeners();
 
     final login = await apiService.postLogin(request);
-
-    notifyListeners();
     try {
       if (login.error == true) {
         _state = ResultState.error;
         _message = login.message;
         _error = login.error;
-        notifyListeners();
       } else {
         _state = ResultState.hasData;
         _message = login.message;
         _error = login.error;
-        notifyListeners();
       }
     } catch (e) {
       _state = ResultState.error;
       _message = 'Terjadi Kesalahan Internet';
       _error = login.error;
+    } finally {
       notifyListeners();
     }
   }
@@ -118,18 +124,48 @@ class StoriesProvider extends ChangeNotifier {
         _state = ResultState.error;
         _message = register.message;
         _error = register.error;
-        notifyListeners();
       } else {
         _state = ResultState.hasData;
         _message = register.message;
         _error = register.error;
-        notifyListeners();
       }
     } catch (e) {
       _state = ResultState.error;
       _message = 'Terjadi Kesalahan Internet';
       _error = register.error;
+    } finally {
       notifyListeners();
     }
+  }
+
+  void setImageFile(XFile? value) {
+    imageFile = value;
+    notifyListeners();
+  }
+
+  void setImagePath(String? value) {
+    imagePath = value;
+    notifyListeners();
+  }
+
+  void removeImage() {
+    imageFile = null;
+    imagePath = null;
+    notifyListeners();
+  }
+
+  Future<StoryUploadResponse?> upload(StoryUploadRequest request) async {
+    isUploading = true;
+    notifyListeners();
+
+    final response = await apiService.uploadDocument(request);
+
+    if (response.error == false) {
+      pageItems = 1;
+      await fetchAllStories();
+      isUploading = false;
+    }
+
+    return response;
   }
 }

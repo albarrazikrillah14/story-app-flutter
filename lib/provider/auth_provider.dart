@@ -7,13 +7,19 @@ import 'package:story_app/data/remote/api/api_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthRepository authRepository;
-  final ApiService apiService;
+  late ApiService apiService;
 
-  AuthProvider(this.authRepository, this.apiService);
+  AuthProvider(this.authRepository) {
+    apiService = ApiService(authRepository);
+  }
 
   bool isLoadingLogin = false;
   bool isLoadingLogout = false;
   bool isLoadingRegister = false;
+
+  Future<bool> isLoggedIn() async {
+    return await authRepository.isLoggedIn();
+  }
 
   Future<bool> login(LoginRequest request) async {
     isLoadingLogin = true;
@@ -22,7 +28,7 @@ class AuthProvider extends ChangeNotifier {
     final result = await apiService.postLogin(request);
 
     if (result.error == false) {
-      await saveToken(result.loginResult!.token);
+      await saveToken(result.loginResult.token);
       await authRepository.login();
     }
     isLoadingLogin = false;
@@ -58,22 +64,21 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<RegisterResponse?> register(RegisterRequest request) async {
-  try {
-    isLoadingRegister = true;
-    notifyListeners();
+    try {
+      isLoadingRegister = true;
+      notifyListeners();
 
-    final result = await apiService.postRegister(request);
+      final result = await apiService.postRegister(request);
 
-    isLoadingRegister = false;
-    notifyListeners();
+      isLoadingRegister = false;
+      notifyListeners();
 
-    return result;
-  } catch (e) {
-    isLoadingRegister = false;
-    notifyListeners();
-    
-    return null;
+      return result;
+    } catch (e) {
+      isLoadingRegister = false;
+      notifyListeners();
+
+      return null;
+    }
   }
-}
-
 }

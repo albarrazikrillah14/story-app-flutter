@@ -1,25 +1,17 @@
-import 'package:story_app/data/local/model/story.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import '../story.dart';
 
-class StoryDetail {
-  bool error;
-  String message;
-  Story story;
+part 'story_detail_response.g.dart';
+part 'story_detail_response.freezed.dart';
 
-  StoryDetail({
-    required this.error,
-    required this.message,
-    required this.story,
-  });
+@freezed
+class StoryDetail with _$StoryDetail {
+  factory StoryDetail({
+    required bool error,
+    required String message,
+    required Story story,
+  }) = _StoryDetail;
 
-  factory StoryDetail.fromJson(Map<String, dynamic> json) => StoryDetail(
-        error: json["error"],
-        message: json["message"],
-        story: Story.fromJson(json["story"]),
-      );
-
-  Map<String, dynamic> toJson() => {
-        "error": error,
-        "message": message,
-        "story": story.toJson(),
-      };
+  factory StoryDetail.fromJson(Map<String, dynamic> json) =>
+      _$StoryDetailFromJson(json);
 }

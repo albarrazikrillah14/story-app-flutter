@@ -28,13 +28,18 @@ class AuthRepository {
 
   Future<bool> deleteToken() async {
     final preferences = await SharedPreferences.getInstance();
-    return preferences.setString(tokenKey, "");
+    preferences.clear();
+    return preferences.remove(tokenKey);
   }
 
   Future<String?> getToken() async {
     final preferences = await SharedPreferences.getInstance();
     final tokenJson = preferences.getString(tokenKey) ?? "";
 
-    return json.decode(tokenJson);
+    if (tokenJson.isNotEmpty) {
+      return json.decode(tokenJson);
+    } else {
+      return null;
+    }
   }
 }
